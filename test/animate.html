@@ -24,7 +24,7 @@
 
 <body>
 <div id="stage">
-	<img src="i/rocket.png">
+	<img src="i/rocket2.png">
 	<canvas width="600" height="600"></canvas>
 </div>
 <div>
@@ -39,7 +39,7 @@
 <!-- JavaScript -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.js"></script>
 <script src="js/jquery.easing-1.3.min.js"></script>
-<script src="js/jquery.transform-1.3.min.js"></script>
+<script src="js/jquery.transform-0.9.3.min.js"></script>
 <script src="../src/jquery.curve.js"></script>
 <script>
 (function() {
@@ -56,6 +56,8 @@
 	function clear() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	}
+	
+	var rad2deg = $.angle.radianToDegree;
 	
 	var $elem = $('#stage img:first'),
 		h = $elem.height(),
@@ -83,6 +85,8 @@
 			}
 			ctx.lineTo(p[0], p[1]);
 		}
+		
+		
 		ctx.stroke();
 		
 		// Animate to the curve
@@ -136,6 +140,20 @@
 				ctx.moveTo(p[0], p[1]);
 			}
 			ctx.lineTo(p[0], p[1]);
+			
+			if (i % 45 === 0) {
+				var x = opts.x,
+					y = opts.y,
+					h = opts.minor,
+					w = opts.major,
+					Px = p[0],
+					Py = p[1],
+					Tx = ((Px-x) - (w * (Py-y)) / h),
+					Ty = ((Py-y) + (h * (Px-x)) / w);
+					
+				ctx.lineTo(Tx+x, Ty+y);
+				ctx.moveTo(p[0], p[1]);
+			}
 		}
 		ctx.stroke();
 		
@@ -235,6 +253,14 @@
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
+	function rotate(p, angle) {
+		var rad = angle * (Math.PI / 180),
+			c = Math.cos(rad),
+			s = Math.sin(rad);
+
+		return [parseFloat((c*p[0] - s*p[1]).toFixed(6)), parseFloat((s*p[0] + c*p[1]).toFixed(6))];
+	}
+	
 	function animate(fn, opts) {
 		// Create a jQuery FX object
 		var fx = new $.fx($elem[0], $.speed({
@@ -245,9 +271,27 @@
 				
 				var p = fn(t, opts);
 				
+				var x = opts.x,
+					y = opts.y,
+					Px = p[0],
+					Py = p[1],
+					angle = 0;
+				if (fn === $.curve.circle) {
+					var m = -1/((Py-y)/(Px-x));
+					angle = (((Py-y) < 0 ? 0 : -180) + rad2deg(Math.atan(m)));
+				} else if (fn === $.curve.ellipse) {
+					var eh = opts.minor,
+						ew = opts.major,
+						Tx = ((Px-x) - (ew * (Py-y)) / eh),
+						Ty = ((Py-y) + (eh * (Px-x)) / ew);
+					var m = (Py-y-Ty)/(Px-x-Tx);
+					angle = ((Px-x-Tx) > 0 ? 180 : 0) + rad2deg(Math.atan(m));
+				}
+				
 				$elem.css({
 					left: (p[0] - w/2) + 'px',
-					top: (p[1] - h/2) + 'px'
+					top: (p[1] - h/2) + 'px',
+					rotate: parseFloat(angle.toFixed(8)) + 'deg'
 				});
 			},
 			curAnim: {'curve' : 1}

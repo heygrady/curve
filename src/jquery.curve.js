@@ -49,6 +49,7 @@
 		 *      radius - length of the radius in pixels
 		 *      minor - length in pixels of the minor axis
 		 *      arc - portion of the circle to draw in degrees
+		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
 		 */
 		circle: function(t, opts) {
@@ -56,7 +57,8 @@
 				x: 0,
 				y: 0,
 				radius: 0, // required
-				arc: 360
+				arc: 360,
+				invert: true
 			}, opts);
 
 			t = time(t, opts);
@@ -69,7 +71,7 @@
 
 			return [
 				opts.x + sinalpha * r,
-				opts.y + cosalpha * r
+				opts.y + (opts.invert ? -cosalpha * r : cosalpha * r)
 			];
 		},
 		
@@ -83,6 +85,7 @@
 		 *      minor - length of the minor radius in pixels
 		 *      angle - rotation of the ellipse around the center in degrees
 		 *      arc - portion of the ellipse to draw in degrees
+		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
 		 */
 		ellipse: function(t, opts) {
@@ -92,15 +95,11 @@
 				major: 0, // required, pixels
 				minor: 0, // required, pixels
 				angle: 0, // in degrees
-				arc: 360
+				arc: 360,
+				invert: true
 			}, opts);
 
 			t = time(t, opts);
-
-			// calculate angle of ellipse (rotated around center)
-			var beta = -opts.angle * (Math.PI / 180), // to radians
-				sinbeta = Math.sin(beta),
-				cosbeta = Math.cos(beta);
 
 			var i = t * opts.arc,
 				alpha = i * (Math.PI / 180), // to radians
@@ -109,9 +108,15 @@
 				a = opts.major,
 				b = opts.minor;
 
+			var result = [
+				sinalpha * a,
+				cosalpha * b
+			];
+			result = opts.angle ? rotate(result, opts.angle) : result;
+
 			return [
-				opts.x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta),
-				opts.y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta)
+				opts.x + result[0],
+				opts.y + (opts.invert ? -result[1] : result[1])
 			];
 		},
 		
@@ -126,7 +131,7 @@
 		 *      frequency - number of peaks in a single period
 		 *      wavelength - width in pixels of a single period
 		 *      angle - direction of wave in degrees
-		 *      invert - turns the sine wave upsidedown
+		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
 		 */
 		sine: function(t, opts) {
@@ -137,7 +142,7 @@
 				period: 1,
 				frequency: 1,
 				wavelength: 0, // pixels
-				angle: 0, // in degrees,
+				angle: 0, // in degrees
 				invert: true
 			}, opts);
 
