@@ -11,12 +11,9 @@
 		 * Creates a Bezier Curve
 		 * @param Number t time as a percentage of the duration
 		 * @param Array opts
-		 * 		x - offset in pixels
-		 * 		y - offset in pixels
-		 * 		points - array of x, y coordinates
-		 * 		angle - direction of wave in degrees
-		 * 		start - time offset
-		 * 		end - time offset
+		 *      x - offset in pixels
+		 *      y - offset in pixels
+		 *      points - array of x, y coordinates
 		 * @return Array x, y coordinates
 		 */
 		bezier: function(t, opts) {
@@ -32,11 +29,11 @@
 			// use the simplified functions when possible
 			if (n === 0) {
 				return [opts.x, opts.y];
-			} else if (n == 1) {
+			} else if (n === 1) {
 				return $b.linear.apply(this, arguments);
-			} else if (n == 2) {
+			} else if (n === 2) {
 				return $b.quadratic.apply(this, arguments);
-			} else if (n == 3) {
+			} else if (n === 3) {
 				return $b.cubic.apply(this, arguments);
 			} else {
 				return $b.poly.apply(this, arguments);
@@ -47,13 +44,11 @@
 		 * Creates a Circle
 		 * @param Number t time as a percentage of the duration
 		 * @param Array opts
-		 * 		x - center in pixels
-		 * 		y - center in pixels
-		 * 		radius - length of the radius in pixels
-		 * 		minor - length in pixels of the minor axis
-		 * 		arc - portion of the circle to draw in degrees
-		 * 		start - time offset
-		 * 		end - time offset
+		 *      x - center in pixels
+		 *      y - center in pixels
+		 *      radius - length of the radius in pixels
+		 *      minor - length in pixels of the minor axis
+		 *      arc - portion of the circle to draw in degrees
 		 * @return Array x, y coordinates
 		 */
 		circle: function(t, opts) {
@@ -82,14 +77,12 @@
 		 * Creates an Ellipse
 		 * @param Number t time as a percentage of the duration
 		 * @param Array opts
-		 * 		x - center in pixels
-		 * 		y - center in pixels
-		 * 		major - length of the major radius in pixels
-		 * 		minor - length of the minor radius in pixels
-		 * 		angle - rotation of the ellipse around the center in degrees
-		 * 		arc - portion of the ellipse to draw in degrees
-		 * 		start - time offset
-		 * 		end - time offset
+		 *      x - center in pixels
+		 *      y - center in pixels
+		 *      major - length of the major radius in pixels
+		 *      minor - length of the minor radius in pixels
+		 *      angle - rotation of the ellipse around the center in degrees
+		 *      arc - portion of the ellipse to draw in degrees
 		 * @return Array x, y coordinates
 		 */
 		ellipse: function(t, opts) {
@@ -126,15 +119,14 @@
 		 * Creates a Sine wave
 		 * @param Number t time as a percentage of the duration
 		 * @param Array opts
-		 * 		x - offset in pixels
-		 * 		y - offset in pixels
-		 * 		amp - peak deviation from center in pixels
-		 * 		period - number of complete waves to draw
-		 * 		frequency - number of peaks in a single period
-		 * 		wavelength - width in pixels of a single period
-		 * 		angle - direction of wave in degrees
-		 * 		start - time offset
-		 * 		end - time offset
+		 *      x - offset in pixels
+		 *      y - offset in pixels
+		 *      amp - peak deviation from center in pixels
+		 *      period - number of complete waves to draw
+		 *      frequency - number of peaks in a single period
+		 *      wavelength - width in pixels of a single period
+		 *      angle - direction of wave in degrees
+		 *      invert - turns the sine wave upsidedown
 		 * @return Array x, y coordinates
 		 */
 		sine: function(t, opts) {
@@ -172,12 +164,10 @@
 	 * Creates a Bezier Curve
 	 * @param Number t time as a percentage of the duration
 	 * @param Array opts
-	 * 		x - center in pixels
-	 * 		y - center in pixels
-	 * 		points - array of x, y coordinates
-	 * 		angle - direction of wave in degrees
-	 * 		start - time offset
-	 * 		end - time offset
+	 *      x - center in pixels
+	 *      y - center in pixels
+	 *      points - array of x, y coordinates
+	 *      angle - direction of wave in degrees
 	 * @return Array x, y coordinates
 	 */
 	$.extend($.curve.bezier, {
@@ -194,7 +184,7 @@
 			var p = opts.points;
 			var result = [
 				(1 - t) * p[0][0] + t * p[1][0],
-				(1 - t) * p[0][1] + t * p[1][1],
+				(1 - t) * p[0][1] + t * p[1][1]
 			];
 			result = opts.angle ? rotate(result, opts.angle) : result;
 
@@ -292,6 +282,16 @@
 		}
 	});
 	
+	/**
+	 * Doctors time based on options
+	 * @private
+	 * @param Number t time as a percentage of the duration
+	 * @param Array opts
+	 *      reverse - reverses time to start from the end
+	 *      start - time offset
+	 *      end - time offset
+	 * @return Number
+	 */
 	function time(t, opts) {
 		opts = $.extend({
 			reverse: false,
@@ -310,10 +310,10 @@
 	 * @return Number
 	 */
 	function factorial(n) {
-		if ((n == 0) || (n == 1)) {
+		if ((n === 0) || (n === 1)) {
 			return 1;
 		} else {
-			return (n * factorial(n-1) );
+			return (n * factorial(n - 1) );
 		}
 	}
 

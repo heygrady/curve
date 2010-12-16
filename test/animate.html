@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+
+	<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+	 Remove this if you use the .htaccess -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<title>animate</title>
+	<meta name="description" content="" />
+	<style>
+		#stage {
+			position: relative;
+			width: 600px;
+			height: 600px;
+			border: 1px solid black;
+		}
+		img {
+			position: absolute;
+		}
+	</style>
+</head>
+
+<body>
+<div id="stage">
+	<img src="i/rocket.png">
+	<canvas width="600" height="600"></canvas>
+</div>
+<div>
+	<button id="circle">Circle</button>
+	<button id="ellipse">Ellipse</button>
+	<button id="sine">Sine</button>
+	<button id="bezier">Bezier</button>
+	<button id="fun">Fun</button>
+	<button id="clear">Clear</button>
+</div>
+
+<!-- JavaScript -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.js"></script>
+<script src="js/jquery.easing-1.3.min.js"></script>
+<script src="js/jquery.transform-1.3.min.js"></script>
+<script src="../src/jquery.curve.js"></script>
+<script>
+(function() {
+	var canvas = $('canvas:first')[0],
+		ctx = canvas.getContext('2d');
+	
+	$('#circle').click(circle);
+	$('#ellipse').click(ellipse);
+	$('#sine').click(sine);
+	$('#bezier').click(bezier);
+	$('#fun').click(fun);
+	$('#clear').click(clear);
+	
+	function clear() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	
+	var $elem = $('#stage img:first'),
+		h = $elem.height(),
+		w = $elem.width();
+	
+	// Draw a Circle
+	function circle(e) {
+		e.preventDefault();
+		clear();
+		
+		// pull out the options to reuse them
+		var opts = {
+			x: 300,
+			y: 300,
+			radius: 150
+		}
+		
+		// draw a circle
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.circle(t, opts);
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+		
+		// Animate to the curve
+		animate($.curve.circle, opts);
+	}
+	
+	// Draw an Ellipse
+	function ellipse(e) {
+		e.preventDefault();
+		clear();
+		
+		var opts = {
+			x: 300,
+			y: 300,
+			major: 300,
+			minor: 150
+		};
+		
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.ellipse(t, opts);
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+		
+		// Animate to the curve
+		animate($.curve.ellipse, opts);
+	}
+	
+	// Draw a Sine Wave
+	function sine(e) {
+		e.preventDefault();
+		clear();
+		
+		var opts = {
+			x: 0,
+			y: 300,
+			amp: 100,
+			period: 3
+		};
+		
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.sine(t, opts);
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+		
+		// Animate to the curve
+		animate($.curve.sine, opts);
+	}
+	
+	// Draw a bezier
+	function bezier(e) {
+		e.preventDefault();
+		clear();
+		ctx.beginPath();
+		var points = [
+			[0, 300],
+			[rand(0, 400), rand(0, 600)],
+			[rand(200, 600), rand(0, 600)],
+			[600, 300]
+		];
+		
+		var opts = {
+			points: points
+		}
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.bezier(t, opts);
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+		
+		// Animate to the curve
+		animate($.curve.bezier, opts);
+	}
+	
+	// Draw a bezier
+	function fun(e) {
+		e.preventDefault();
+		clear();
+		ctx.beginPath();
+		for (var i = 0; i <= 3000; i++) {
+			var t = i/3000;
+			var p = $.curve.ellipse(t, {
+				x: 300*t,
+				y: 300*t,
+				major: 300*t,
+				minor: 150*t,
+				arc: 360*10*t,
+				angle: 360*t
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+		
+		// Animate to the curve
+		// Create a jQuery FX object
+		var fx = new $.fx($elem[0], $.speed({
+			duration: 10000,
+			easing: 'easeOutCirc',
+			step: function(now, fx) {
+				var $elem = $(this);
+				var t = fx.pos;
+				
+				var p = $.curve.ellipse(t, {
+					x: 300*t,
+					y: 300*t,
+					major: 300*t,
+					minor: 150*t,
+					arc: 360*10*t,
+					angle: 360*t
+				});
+				
+				$elem.css({
+					left: (p[0] - w/2) + 'px',
+					top: (p[1] - h/2) + 'px'
+				});
+			},
+			curAnim: {'curve' : 1}
+		}), 'curve');
+		
+		// Give it a new update function
+		fx.update = function() {
+			if ( this.options.step ) {
+				this.options.step.call( this.elem, this.now, this );
+			}
+		}
+		
+		// Start the animation
+		fx.custom(0, 1, '');
+	}
+	
+	function rand(min, max) {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+	
+	function animate(fn, opts) {
+		// Create a jQuery FX object
+		var fx = new $.fx($elem[0], $.speed({
+			duration: 1500,
+			step: function(now, fx) {
+				var $elem = $(this);
+				var t = fx.pos;
+				
+				var p = fn(t, opts);
+				
+				$elem.css({
+					left: (p[0] - w/2) + 'px',
+					top: (p[1] - h/2) + 'px'
+				});
+			},
+			curAnim: {'curve' : 1}
+		}), 'curve');
+		
+		// Give it a new update function
+		fx.update = function() {
+			if ( this.options.step ) {
+				this.options.step.call( this.elem, this.now, this );
+			}
+		}
+		
+		// Start the animation
+		fx.custom(0, 1, '');
+	}
+})();
+</script>
+</body>
+</html>
