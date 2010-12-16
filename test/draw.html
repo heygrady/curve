@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+
+	<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+	 Remove this if you use the .htaccess -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<title>draw</title>
+	<meta name="description" content="" />
+	<style>
+		canvas {
+			border: 1px solid black;
+		}
+	</style>
+</head>
+
+<body>
+<canvas width="600" height="600"></canvas>
+<div>
+	<button id="circle">Circle</button>
+	<button id="ellipse">Ellipse</button>
+	<button id="sine">Sine</button>
+	<button id="bezier">Bezier</button>
+	<button id="fun">Fun</button>
+	<button id="clear">Clear</button>
+</div>
+
+<!-- JavaScript -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.js"></script>
+<script src="js/jquery.easing-1.3.min.js"></script>
+<script src="js/jquery.transform-1.3.min.js"></script>
+<script src="../src/jquery.curve.js"></script>
+<script>
+(function() {
+	var canvas = $('canvas:first')[0],
+		ctx = canvas.getContext('2d');
+	
+	$('#circle').click(circle);
+	$('#ellipse').click(ellipse);
+	$('#sine').click(sine);
+	$('#bezier').click(bezier);
+	$('#fun').click(fun);
+	$('#clear').click(function() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	});
+	
+	// Draw a Circle
+	function circle(e) {
+		e.preventDefault();
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.circle(t, {
+				x: 300,
+				y: 300,
+				radius: 150
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+	}
+	
+	// Draw an Ellipse
+	function ellipse(e) {
+		e.preventDefault();
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.ellipse(t, {
+				x: 300,
+				y: 300,
+				major: 300,
+				minor: 150
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+	}
+	
+	// Draw a Sine Wave
+	function sine(e) {
+		e.preventDefault();
+		ctx.beginPath();
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.sine(t, {
+				x: 0,
+				y: 300,
+				amp: 100,
+				period: 3
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+	}
+	
+	// Draw a bezier
+	function bezier(e) {
+		e.preventDefault();
+		ctx.beginPath();
+		var points = [
+			[0, 300],
+			[rand(0, 400), rand(0, 600)],
+			[rand(200, 600), rand(0, 600)],
+			[600, 300]
+		];
+		for (var i = 0; i <= 1000; i++) {
+			var t = i/1000;
+			var p = $.curve.bezier(t, {
+				points: points
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+	}
+	
+	// Draw a bezier
+	function fun(e) {
+		e.preventDefault();
+		ctx.beginPath();
+		for (var i = 0; i <= 3000; i++) {
+			var t = i/3000;
+			var p = $.curve.ellipse(t, {
+				x: 300*t,
+				y: 300*t,
+				major: 300*t,
+				minor: 150*t,
+				arc: 360*10*t,
+				angle: 360*t
+			});
+			if (i == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+		}
+		ctx.stroke();
+	}
+	
+	function rand(min, max) {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+})();
+</script>
+</body>
+</html>
