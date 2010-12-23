@@ -8,6 +8,26 @@
 	
 	$.extend($.curve, {
 		/**
+		 * Find the slope of a curve at a given time
+		 * Uses a secant line to approximate
+		 * @param Function fn a curve function
+		 * @param Number t time as a percentage of the duration
+		 * @param Array opts for the curve function
+		 * 
+		 * @return Number angle in radians
+		 */
+		slope: function(fn, t, opts) {
+			var h = 1/1000,
+				p1 = fn(t+h, opts),
+				p2 = fn(t-h, opts);
+			var rad = Math.atan((p1[1]-p2[1])/(p1[0]-p2[0]));
+			if (p1[0] < p2[0]) {
+				rad += Math.PI;
+			}
+			return rad;
+		},
+		
+		/**
 		 * Creates a Bezier Curve
 		 * @param Number t time as a percentage of the duration
 		 * @param Array opts

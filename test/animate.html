@@ -44,7 +44,8 @@
 <script src="../src/jquery.tween.js"></script>
 <script>
 (function() {
-	var canvas = $('canvas:first')[0],
+	var $canvas = $('canvas:first'),
+		canvas = $canvas[0],
 		ctx = canvas.getContext('2d');
 	
 	$('#circle').click(circle);
@@ -57,6 +58,7 @@
 	function clear() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		$elem.stop();
+		$canvas.stop();
 	}
 	
 	var rad2deg = $.angle.radianToDegree;
@@ -77,18 +79,6 @@
 			radius: 150
 		};
 		
-		
-		ctx.beginPath();
-		$('canvas').tween(function(t, fx) {
-			// draw a circle
-			var p = $.curve.circle(t, opts);
-			if (t == 0) {
-				ctx.moveTo(p[0], p[1]);
-			}
-			ctx.lineTo(p[0], p[1]);
-			ctx.stroke();
-		}, 1500);
-		
 		// Animate to the curve
 		animate($.curve.circle, opts);
 	}
@@ -105,22 +95,6 @@
 			minor: 150
 		};
 		
-		ctx.beginPath();
-		for (var i = 0; i <= 100; i++) {
-			var t = i/100;
-			var p = $.curve.ellipse(t, {
-				x: 300,
-				y: 300,
-				major: 300,
-				minor: 150
-			});
-			if (i == 0) {
-				ctx.moveTo(p[0], p[1]);
-			}
-			ctx.lineTo(p[0], p[1]);
-		}
-		ctx.stroke();
-		
 		// Animate to the curve
 		animate($.curve.ellipse, opts);
 	}
@@ -131,37 +105,11 @@
 		clear();
 		
 		var opts = {
-			x: 300,
-			y: 600,
-			amp: 100,
-			period: 3,
-			angle: 90
+			x: 0,
+			y: 300,
+			amp: 150,
+			period: 2
 		};
-		
-		ctx.beginPath();
-		for (var i = 0; i <= 1000; i++) {
-			var t = i/1000;
-			var p = $.curve.sine(t, opts);
-			if (i == 0) {
-				ctx.moveTo(p[0], p[1]);
-			}
-			ctx.lineTo(p[0], p[1]);
-			
-			if (i % 45 === 0) {
-				var x = opts.x,
-					y = opts.y,
-					h = opts.minor,
-					w = opts.major,
-					Px = p[0],
-					Py = p[1],
-					Tx = ((Px-x) - (w * (Py-y)) / h),
-					Ty = ((Py-y) + (h * (Px-x)) / w);
-					
-				ctx.lineTo(Tx+x, Ty+y);
-				ctx.moveTo(p[0], p[1]);
-			}
-		}
-		ctx.stroke();
 		
 		// Animate to the curve
 		animate($.curve.sine, opts);
@@ -171,26 +119,15 @@
 	function bezier(e) {
 		e.preventDefault();
 		clear();
-		ctx.beginPath();
-		var points = [
-			[0, 300],
-			[rand(0, 400), rand(0, 600)],
-			[rand(200, 600), rand(0, 600)],
-			[600, 300]
-		];
 		
 		var opts = {
-			points: points
+			points: [
+				[0, 300],
+				[rand(0, 400), rand(0, 600)],
+				[rand(200, 600), rand(0, 600)],
+				[600, 300]
+			]
 		}
-		for (var i = 0; i <= 1000; i++) {
-			var t = i/1000;
-			var p = $.curve.bezier(t, opts);
-			if (i == 0) {
-				ctx.moveTo(p[0], p[1]);
-			}
-			ctx.lineTo(p[0], p[1]);
-		}
-		ctx.stroke();
 		
 		// Animate to the curve
 		animate($.curve.bezier, opts);
@@ -200,95 +137,77 @@
 	function fun(e) {
 		e.preventDefault();
 		clear();
+		
+		var fn = $.curve.ellipse;
+		
 		ctx.beginPath();
-		for (var i = 0; i <= 3000; i++) {
-			var t = i/3000;
-			var p = $.curve.ellipse(t, {
-				x: 300*t,
-				y: 300*t,
-				major: 300*t,
-				minor: 150*t,
-				arc: 360*10*t,
+		
+		// Tween!
+		$elem.tween(function(now, fx) {
+			var $elem = $(this);
+			var t = fx.pos;
+			
+			var opts = {
+				x: 300,
+				y: 300,
+				major: 300*(1-t),
+				minor: 300*t,
+				arc: 360*5*t,
 				angle: 360*t
+			};
+			
+			var p = fn(t, opts),
+				angle = rad2deg($.curve.slope(fn, t, opts));
+			
+			
+			// set styles
+			$elem.css({
+				left: (p[0] - w/2) + 'px',
+				top: (p[1] - h/2) + 'px',
+				rotate: parseFloat(angle.toFixed(8)) + 'deg'
 			});
-			if (i == 0) {
+			
+			// draw on the canvas!
+			if (t == 0) {
 				ctx.moveTo(p[0], p[1]);
 			}
 			ctx.lineTo(p[0], p[1]);
-		}
-		ctx.stroke();
-		
-		// Animate to the curve
-		// Create a jQuery FX object
-		var fx = new $.fx($elem[0], $.speed({
-			duration: 10000,
-			easing: 'easeOutCirc',
-			step: function(now, fx) {
-				var $elem = $(this);
-				var t = fx.pos;
-				
-				var p = $.curve.ellipse(t, {
-					x: 300*t,
-					y: 300*t,
-					major: 300*t,
-					minor: 150*t,
-					arc: 360*10*t,
-					angle: 360*t
-				});
-				
-				$elem.css({
-					left: (p[0] - w/2) + 'px',
-					top: (p[1] - h/2) + 'px'
-				});
-			},
-			curAnim: {'curve' : 1}
-		}), 'curve');
-		
-		// Give it a new update function
-		fx.update = function() {
-			if ( this.options.step ) {
-				this.options.step.call( this.elem, this.now, this );
-			}
-		}
-		
-		// Start the animation
-		fx.custom(0, 1, '');
+			ctx.stroke();
+		}, {
+			duration: 15000
+		});
 	}
 	
 	function rand(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
-	function rotate(p, angle) {
-		var rad = angle * (Math.PI / 180),
-			c = Math.cos(rad),
-			s = Math.sin(rad);
-
-		return [parseFloat((c*p[0] - s*p[1]).toFixed(6)), parseFloat((s*p[0] + c*p[1]).toFixed(6))];
-	}
-	
 	function animate(fn, opts) {
-		function step(now, fx) {
+		//ctx.beginPath();		
+		// Tween!
+		$elem.tween(function(now, fx) {
 			var $elem = $(this);
 			var t = fx.pos;
 			
 			var p = fn(t, opts);
-			
 			var x = opts.x,
 				y = opts.y,
 				Px = p[0],
 				Py = p[1],
-				angle = 0;
-				
+				angle = rad2deg($.curve.slope(fn, t, opts));
 			$elem.css({
 				left: (p[0] - w/2) + 'px',
 				top: (p[1] - h/2) + 'px',
 				rotate: parseFloat(angle.toFixed(8)) + 'deg'
 			});
-		}
-		
-		// Tween!
-		$elem.tween(step, {
+			
+			
+			if (t == 0) {
+				ctx.moveTo(p[0], p[1]);
+			}
+			ctx.lineTo(p[0], p[1]);
+			ctx.stroke();
+		}, {
 			duration: 1500
 		});
 	}
