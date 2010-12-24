@@ -6,6 +6,13 @@
 		$.curve = {};
 	}
 	
+	/**
+	 * Converting a degree to a radian
+	 * @const
+	 */
+	var DEG_RAD = Math.PI/180;
+	
+	// Curve functions
 	$.extend($.curve, {
 		/**
 		 * Find the slope of a curve at a given time
@@ -16,12 +23,23 @@
 		 * 
 		 * @return Number angle in radians
 		 */
-		slope: function(fn, t, opts) {
+		slope: function(fn, t, opts, slope) {
 			var h = 1/1000,
 				p1 = fn(t+h, opts),
 				p2 = fn(t-h, opts);
-			var rad = Math.atan((p1[1]-p2[1])/(p1[0]-p2[0]));
-			if (p1[0] < p2[0]) {
+			
+			// calculate slope and direction
+			var m = (p1[1]-p2[1])/(p1[0]-p2[0]),
+				d = p1[0] < p2[0] ? -1 : 1;
+			
+			// return teh slope and direction
+			if (slope) {
+				return [m, d];
+			} 
+			
+			// return the slope angle
+			rad = Math.atan(m);
+			if (d < 0) {
 				rad += Math.PI;
 			}
 			return rad;
@@ -84,7 +102,7 @@
 			t = time(t, opts);
 
 			var i = t * opts.arc,
-				alpha = i * (Math.PI / 180),
+				alpha = i * DEG_RAD,
 				sinalpha = Math.sin(alpha),
 				cosalpha = Math.cos(alpha),
 				r = opts.radius;
@@ -122,7 +140,7 @@
 			t = time(t, opts);
 
 			var i = t * opts.arc,
-				alpha = i * (Math.PI / 180), // to radians
+				alpha = i * DEG_RAD, // to radians
 				sinalpha = Math.sin(alpha),
 				cosalpha = Math.cos(alpha),
 				a = opts.major,
@@ -148,6 +166,7 @@
 		 *      y - offset in pixels
 		 *      amp - peak deviation from center in pixels
 		 *      period - number of complete waves to draw
+		 *      rotate - angle to turn the sine wave in degrees, rotate 90 === cosine
 		 *      frequency - number of peaks in a single period
 		 *      wavelength - width in pixels of a single period
 		 *      angle - direction of wave in degrees
@@ -160,6 +179,7 @@
 				y: 0,
 				amp: 0, // required, pixels
 				period: 1,
+				rotate: 0,
 				frequency: 1,
 				wavelength: 0, // pixels
 				angle: 0, // in degrees
@@ -170,8 +190,13 @@
 			
 			var a = opts.amp,
 				w = opts.wavelength || a * 2,
-				rad = (t * opts.frequency) * opts.period * (360 * (Math.PI / 180));
-
+				rad = (t * opts.frequency) * opts.period * (360 * DEG_RAD);
+			
+			// shift the start position
+			if (opts.rotate) {
+				rad = rad + (opts.rotate * DEG_RAD);
+			}
+			
 			var result = [
 				t * opts.period * w,
 				parseFloat((Math.sin(rad) * a).toFixed(8))
@@ -350,7 +375,7 @@
 	 * @return Array x, y coordinate
 	 */
 	function rotate(p, angle) {
-		var rad = angle * (Math.PI / 180),
+		var rad = angle * DEG_RAD,
 			c = Math.cos(rad),
 			s = Math.sin(rad);
 
