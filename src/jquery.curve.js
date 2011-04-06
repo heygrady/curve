@@ -6,6 +6,24 @@
 		$.curve = {};
 	}
 	
+	/**
+	 * Converting a degree to a radian
+	 * @const
+	 */
+	var DEG_RAD = Math.PI/180;
+	
+	/**
+	 * Converting a radian to a degree
+	 * @const
+	 */
+	var RAD_DEG = 180/Math.PI;
+	
+	// 4 quadrants of a circle
+	var QUAD_1 = Math.PI / 2;
+	var QUAD_2 = Math.PI;
+	var QUAD_3 = Math.PI + QUAD_1;
+	var QUAD_4 = Math.PI * 2;
+	
 	$.extend($.curve, {
 		/**
 		 * Find the slope of a curve at a given time
@@ -67,31 +85,46 @@
 		 *      x - center in pixels
 		 *      y - center in pixels
 		 *      radius - length of the radius in pixels
-		 *      minor - length in pixels of the minor axis
 		 *      arc - portion of the circle to draw in degrees
 		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
 		 */
 		circle: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				radius: 0, // required
-				arc: 360,
-				invert: true
-			}, opts);
-
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				r = opts.radius || 0,
+				angle = opts.angle || 0,
+				arc = opts.arc || 360,
+				invert = opts.invert || true;
+			
+			// convert time
 			t = time(t, opts);
-
-			var i = t * opts.arc,
-				alpha = i * (Math.PI / 180),
+			
+			// calculate current angle
+			var alpha = t * arc * DEG_RAD,
 				sinalpha = Math.sin(alpha),
-				cosalpha = Math.cos(alpha),
-				r = opts.radius;
-
+				cosalpha = Math.cos(alpha)
+			
+			// calculate current coords
+			var x = a + sinalpha * r,
+				y = b + (invert ? -cosalpha * r : cosalpha * r);
+			
+			// calculate the tangent angle
+			var theta = Math.atan(-1 * (x - a)/(y - b));
+				
+			// rotate the circle
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
+			
+			// return coords and tangent angle
 			return [
-				opts.x + sinalpha * r,
-				opts.y + (opts.invert ? -cosalpha * r : cosalpha * r)
+				x,
+				y,
+				theta + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0)
 			];
 		},
 		
@@ -109,34 +142,51 @@
 		 * @return Array x, y coordinates
 		 */
 		ellipse: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				major: 0, // required, pixels
-				minor: 0, // required, pixels
-				angle: 0, // in degrees
-				arc: 360,
-				invert: true
-			}, opts);
-
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				major = opts.major || 0,
+				minor = opts.minor || 0,
+				angle = opts.angle || 0,
+				arc = opts.arc || 360,
+				invert = opts.invert || true;
+			
+			// convert time
 			t = time(t, opts);
 
-			var i = t * opts.arc,
-				alpha = i * (Math.PI / 180), // to radians
+			// calculate current angle
+			var alpha = t * arc * DEG_RAD,
 				sinalpha = Math.sin(alpha),
-				cosalpha = Math.cos(alpha),
-				a = opts.major,
-				b = opts.minor;
+				cosalpha = Math.cos(alpha);
 
-			var result = [
-				sinalpha * a,
-				cosalpha * b
-			];
-			result = opts.angle ? rotate(result, opts.angle) : result;
-
+			// calculate coordinates
+			var x = a + sinalpha * major,
+				y = b + (invert ? -1 : 1) * cosalpha * minor;
+			
+			// calculate the foci
+			var f = Math.sqrt(Math.abs(major*major - minor*minor)),
+				f1 = major > minor ? [a + f, b]: [a, b + f],
+				f2 = major > minor ? [a - f, b]: [a, b - f];
+			
+			// calculate the inner angle
+			var theta1 = innerAngle([x, y], f1, f2);
+			var theta2 = alpha > QUAD_1 && alpha < QUAD_3 ? innerAngle(f1, f2, [x, y]) : innerAngle(f2, f1, [x, y]);
+			
+			// calculate the tangent angle
+			var theta = ((Math.PI - theta1) / 2) - theta2;
+			
+			// rotate the ellipse
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
+			
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + (opts.invert ? -result[1] : result[1])
+				x,
+				y,
+				theta + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0)
 			];
 		},
 		
@@ -155,6 +205,15 @@
 		 * @return Array x, y coordinates
 		 */
 		sine: function(t, opts) {
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				amp = opts.amp || 0,
+				p = opts.period || 1,
+				f = opts.frequency || 1,
+				w = opts.wavelength || 0,
+				angle = opts.angle || 0,
+				invert = opts.invert || true;
+			
 			opts = $.extend({
 				x: 0,
 				y: 0,
@@ -170,7 +229,7 @@
 			
 			var a = opts.amp,
 				w = opts.wavelength || a * 2,
-				rad = (t * opts.frequency) * opts.period * (360 * (Math.PI / 180));
+				rad = (t * opts.frequency) * opts.period * (360 * DEG_RAD);
 
 			var result = [
 				t * opts.period * w,
@@ -308,24 +367,45 @@
 	});
 	
 	/**
+	 * @param Array p1 the fulcrum
+	 * @param Array p2
+	 * @param Array p3
+	 * @return Float angle in radians
+	 */
+	function innerAngle(p1, p2, p3) {
+		var x1 = p1[0], x2 = p2[0], x3 = p3[0], y1 = p1[1], y2 = p2[1], y3 = p3[1];
+		var dx21 = x2-x1,
+			dx31 = x3-x1,
+			dy21 = y2-y1,
+			dy31 = y3-y1,
+			m12 = Math.sqrt( dx21*dx21 + dy21*dy21 ),
+			m13 = Math.sqrt( dx31*dx31 + dy31*dy31 );
+		return Math.acos( (dx21*dx31 + dy21*dy31) / (m12 * m13) );
+	}
+	
+	/**
 	 * Doctors time based on options
 	 * @private
 	 * @param Number t time as a percentage of the duration
-	 * @param Array opts
+	 * @param Object opts
 	 *      reverse - reverses time to start from the end
 	 *      start - time offset
 	 *      end - time offset
 	 * @return Number
 	 */
 	function time(t, opts) {
-		opts = $.extend({
-			reverse: false,
-			start: 0,
-			end: 1
-		}, opts);
+		var reverse = opts.reverse || false,
+			start = opts.start || 0,
+			end = opts.end || 1;
 		
-		t = (t*(opts.end - opts.start)) + opts.start;
-		return opts.reverse ? 1-t : t;
+		// if no alterations
+		if (reverse !== true && start === 0 && end === 1) {
+			return t;
+		}
+		
+		// otherwise, doctor time
+		t = (t * (end - start)) + start;
+		return reverse === true ? 1 - t : t;
 	}
 	
 	/**
@@ -350,10 +430,17 @@
 	 * @return Array x, y coordinate
 	 */
 	function rotate(p, angle) {
-		var rad = angle * (Math.PI / 180),
+		// skip angles that won't transform
+		if (angle === 0 || angle === 360) {
+			return p;
+		}
+		
+		// calculate angle
+		var rad = angle * DEG_RAD,
 			c = Math.cos(rad),
 			s = Math.sin(rad);
-
+		
+		// transform point
 		return [c*p[0] - s*p[1], s*p[0] + c*p[1]];
 	}
 })(jQuery);
