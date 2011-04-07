@@ -85,6 +85,7 @@
 		 *      x - center in pixels
 		 *      y - center in pixels
 		 *      radius - length of the radius in pixels
+		 *      angle - rotation of the circle around the center in degrees
 		 *      arc - portion of the circle to draw in degrees
 		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
@@ -201,6 +202,7 @@
 		 *      frequency - number of peaks in a single period
 		 *      wavelength - width in pixels of a single period
 		 *      angle - direction of wave in degrees
+		 *      arc - portion of the wave to draw in degrees
 		 *      invert - flips the y-axis
 		 * @return Array x, y coordinates
 		 */
@@ -210,36 +212,37 @@
 				amp = opts.amp || 0,
 				p = opts.period || 1,
 				f = opts.frequency || 1,
-				w = opts.wavelength || 0,
+				w = opts.wavelength || amp * 2,
 				angle = opts.angle || 0,
+				arc = opts.arc || 360,
 				invert = opts.invert || true;
 			
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				amp: 0, // required, pixels
-				period: 1,
-				frequency: 1,
-				wavelength: 0, // pixels
-				angle: 0, // in degrees
-				invert: true
-			}, opts);
-
+			// convert time
 			t = time(t, opts);
 			
-			var a = opts.amp,
-				w = opts.wavelength || a * 2,
-				rad = (t * opts.frequency) * opts.period * (360 * DEG_RAD);
+			// calculate current angle
+			var alpha = (t * f) * p * (arc * DEG_RAD);
 
-			var result = [
-				t * opts.period * w,
-				parseFloat((Math.sin(rad) * a).toFixed(8))
-			];
-			result = opts.angle ? rotate(result, opts.angle) : result;
+			// calculate coordinates
+			var x = a + t * p * w,
+				y = b + prec(Math.sin(alpha) * amp, 8);
+
+			// calculate the tangent angle
+			var theta = Math.cos(alpha);
 			
+			// rotate the sine wave
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
+			
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + (opts.invert ? -result[1] : result[1])
+				x,
+				y,
+				theta
 			];
 		}
 	});
@@ -442,5 +445,17 @@
 		
 		// transform point
 		return [c*p[0] - s*p[1], s*p[0] + c*p[1]];
+	}
+	
+	/**
+	 * Trim a number to a decimal prec
+	 * @param Float number
+	 * @param Number prec decimal places
+	 * @return Float
+	 */
+	function prec(number, precision) {
+		var p = Math.abs(parseInt(precision,10)) || 0;
+		var coefficient = Math.pow(10, p);
+		return Math.round(number*coefficient)/coefficient;
 	}
 })(jQuery);
