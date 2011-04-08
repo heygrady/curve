@@ -209,26 +209,35 @@
 		sine: function(t, opts) {
 			var a = opts.x || 0,
 				b = opts.y || 0,
-				amp = opts.amp || 0,
+				A = opts.amp || 0,
 				p = opts.period || 1,
+				phase = opts.phase || 0,
 				f = opts.frequency || 1,
-				w = opts.wavelength || amp * 2,
 				angle = opts.angle || 0,
-				arc = opts.arc || 360,
+				arc = (opts.arc || 360) * DEG_RAD,
+				w = opts.wavelength || A * 2,
 				invert = opts.invert || true;
 			
 			// convert time
 			t = time(t, opts);
 			
 			// calculate current angle
-			var alpha = (t * f) * p * (arc * DEG_RAD);
+			//var alpha = (t * f) * p * (arc * DEG_RAD);
+			var alpha = t * f * (arc * p) + phase;
 
 			// calculate coordinates
-			var x = a + t * p * w,
-				y = b + prec(Math.sin(alpha) * amp, 8);
+			var x = a + t * w * arc / Math.PI,
+				y = prec(b + Math.sin(alpha) * A, 8);
 
 			// calculate the tangent angle
-			var theta = Math.cos(alpha);
+			// TODO: the alpha needs to be altered based on the wavelength
+			var theta = Math.cos(alpha); // not always accurate with a frequency > 1
+			//var theta = Math.atan(y / (a + Math.cos(alpha) * w / 2))
+			
+			console.log(
+				prec(theta * RAD_DEG, 2),
+				prec(Math.atan(y / (a + Math.cos(alpha) * w / 2)) * RAD_DEG, 2)
+			);
 			
 			// rotate the sine wave
 			if (angle !== 0 && angle !== 360) {
