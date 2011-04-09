@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////
 // Curve
 ///////////////////////////////////////////////////////
-(function($) {
+;(function($) {
 	if (typeof $.curve === "undefined") {
 		$.curve = {};
 	}
@@ -55,18 +55,14 @@
 		 * @return Array x, y coordinates
 		 */
 		bezier: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				points: []
-			}, opts);
-
-			var n = opts.points.length - 1,
-			$b = $.curve.bezier;
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				n = opts.points.length - 1,
+				$b = $.curve.bezier;
 
 			// use the simplified functions when possible
-			if (n === 0) {
-				return [opts.x, opts.y];
+			if (n < 1) {
+				return [a, b, 0];
 			} else if (n === 1) {
 				return $b.linear.apply(this, arguments);
 			} else if (n === 2) {
@@ -107,8 +103,8 @@
 				cosalpha = Math.cos(alpha)
 			
 			// calculate current coords
-			var x = a + sinalpha * r,
-				y = b + (invert ? -cosalpha * r : cosalpha * r);
+			var x = sinalpha * r,
+				y = cosalpha * r;
 			
 			// calculate the tangent angle
 			var theta = Math.atan(-1 * (x - a)/(y - b));
@@ -123,8 +119,8 @@
 			
 			// return coords and tangent angle
 			return [
-				x,
-				y,
+				a + x,
+				b + y * (invert ? -1 : 1),
 				theta + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0)
 			];
 		},
@@ -160,8 +156,8 @@
 				cosalpha = Math.cos(alpha);
 
 			// calculate coordinates
-			var x = a + sinalpha * major,
-				y = b + (invert ? -1 : 1) * cosalpha * minor;
+			var x = sinalpha * major,
+				y = cosalpha * minor;
 			
 			// calculate the foci
 			var f = Math.sqrt(Math.abs(major*major - minor*minor)),
@@ -185,8 +181,8 @@
 			
 			// return coords and tangent angle
 			return [
-				x,
-				y,
+				a + x,
+				b + y * (invert ? -1 : 1),
 				theta + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0)
 			];
 		},
@@ -226,18 +222,18 @@
 			var alpha = t * f * (arc * p) + phase;
 
 			// calculate coordinates
-			var x = a + t * w * arc / Math.PI,
-				y = prec(b + Math.sin(alpha) * A, 8);
+			var x = t * w * arc / Math.PI,
+				y = Math.sin(alpha) * A;
 
 			// calculate the tangent angle
 			// TODO: the alpha needs to be altered based on the wavelength
 			var theta = Math.cos(alpha); // not always accurate with a frequency > 1
 			//var theta = Math.atan(y / (a + Math.cos(alpha) * w / 2))
 			
-			console.log(
-				prec(theta * RAD_DEG, 2),
-				prec(Math.atan(y / (a + Math.cos(alpha) * w / 2)) * RAD_DEG, 2)
-			);
+//			console.log(
+//				prec(theta * RAD_DEG, 2),
+//				prec(Math.atan(y / (a + Math.cos(alpha) * w / 2)) * RAD_DEG, 2)
+//			);
 			
 			// rotate the sine wave
 			if (angle !== 0 && angle !== 360) {
@@ -249,8 +245,8 @@
 			
 			// return coords and tangent angle
 			return [
-				x,
-				y,
+				a + x,
+				b + y * (invert ? -1 : 1), // TODO: is precision needed?
 				theta
 			];
 		}
@@ -264,116 +260,165 @@
 	 *      y - center in pixels
 	 *      points - array of x, y coordinates
 	 *      angle - direction of wave in degrees
+	 *      invert - flips the y-axis
 	 * @return Array x, y coordinates
 	 */
 	$.extend($.curve.bezier, {
 		linear: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				points: [],
-				angle: 0
-			}, opts);
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				p = opts.points || [],
+				angle = opts.angle || 0,
+				invert = opts.invert || true;
 
+			// convert time
 			t = time(t, opts);
+			
+			// calculate coordinates
+			var x = (1 - t) * p[0][0] + t * p[1][0],
+				y = (1 - t) * p[0][1] + t * p[1][1];
+			
+			// calculate the tangent angle
+			var theta = Math.atan((p[0][1] - p[1][1]) / (p[0][0] - p[1][0]));
+			
+			// rotate the wave
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
 
-			var p = opts.points;
-			var result = [
-				(1 - t) * p[0][0] + t * p[1][0],
-				(1 - t) * p[0][1] + t * p[1][1]
-			];
-			result = opts.angle ? rotate(result, opts.angle) : result;
-
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + result[1]
+				a + x,
+				b + y * (invert ? -1 : 1),
+				theta
 			];
 		},
 		
 		quadratic: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				points: [],
-				angle: 0
-			}, opts);
-
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				p = opts.points || [],
+				angle = opts.angle || 0,
+				invert = opts.invert || true;
+				
+			// convert time
 			t = time(t, opts);
-
-			var p = opts.points,
-				f = [];
+			
+			// calculate f
+			var f = [];
 			f[0] = Math.pow(1 - t, 2);
 			f[1] = 2 * (1 - t) * t;
 			f[2] = Math.pow(t, 2);
-
-			var result = [
-				f[0] * p[0][0] + f[1] * p[1][0] + f[2] * p[2][0],
-				f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1]
-			];
-			result = opts.angle ? rotate(result, opts.angle) : result;
-
+			
+			// calculate coordinates
+			var x = f[0] * p[0][0] + f[1] * p[1][0] + f[2] * p[2][0],
+				y = f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1];
+			
+			// calculate the tangent angle
+			var theta = 0;
+			
+			// rotate the wave
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
+			
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + result[1]
+				a + x,
+				b + y * (invert ? -1 : 1),
+				theta
 			];
 		},
 		
 		cubic: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				points: [],
-				angle: 0
-			}, opts);
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				p = opts.points || [],
+				angle = opts.angle || 0,
+				invert = opts.invert || true;
 
+			// convert time
 			t = time(t, opts);
-
-			var p = opts.points,
-				f = [];
+			
+			// calculate f
+			var f = [];
 			f[0] = Math.pow(1 - t, 3);
 			f[1] = 3 * Math.pow(1 - t, 2) * t;
 			f[2] = 3 * (1 - t) * Math.pow(t, 2);
 			f[3] = Math.pow(t, 3);
 
-			var result = [
-				f[0] * p[0][0] + f[1] * p[1][0] + f[2] * p[2][0] + f[3] * p[3][0],
-				f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1] + f[3] * p[3][1]
-			];
-			result = opts.angle ? rotate(result, opts.angle) : result;
-
+			// calculate coordinates
+			var x = f[0] * p[0][0] + f[1] * p[1][0] + f[2] * p[2][0] + f[3] * p[3][0],
+				y = f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1] + f[3] * p[3][1];
+			
+			// calculate the tangent angle
+			var theta = 0;
+			
+			// rotate the wave
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
+			
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + result[1]
+				a + x,
+				b + y * (invert ? -1 : 1),
+				theta
 			];
 		},
 		
 		poly: function(t, opts) {
-			opts = $.extend({
-				x: 0,
-				y: 0,
-				points: [],
-				angle: 0
-			}, opts);
+			var a = opts.x || 0,
+				b = opts.y || 0,
+				p = opts.points || [],
+				angle = opts.angle || 0,
+				invert = opts.invert || true;
 
-			var p = opts.points,
-				n = p.length - 1;
-
+			// convert time
 			t = time(t, opts);
+			
+			// calculate n
+			var n = p.length - 1;
 
-			var result = [opts.x + 0, opts.y + 0];
+			// calculate coordinates
+			var x = 0,
+				y = 0;
+			
+			// calculate coordinates	
 			var pN, cN, fN;
 			for (var i = 0; i <= n; i++) {
 				pN = p[i];
 				cN = factorial(n) / (factorial(i) * factorial(n - i));
 				fN = cN * Math.pow(1 - t, n - i) * Math.pow(t, i);
-				result[0] += fN * pN[0];
-				result[1] += fN * pN[1];
+				x += fN * pN[0];
+				y += fN * pN[1];
 			}
-			result = opts.angle ? rotate(result, opts.angle) : result;
+			
+			// calculate the tangent angle
+			var theta = 0;
+			
+			// rotate the wave
+			if (angle !== 0 && angle !== 360) {
+				var coord = rotate([x, y], angle);
+				x = coord[0];
+				y = coord[1];
+				theta += angle * DEG_RAD;
+			}
 
+			// return coords and tangent angle
 			return [
-				opts.x + result[0],
-				opts.y + result[1]
+				a + x,
+				b + y * (invert ? -1 : 1),
+				theta
 			];
 		}
 	});
