@@ -13,7 +13,7 @@
 		#stage {
 			position: relative;
 			width: 600px;
-			height: 600px;
+			height: 300px;
 			border: 1px solid black;
 		}
 		img {
@@ -25,7 +25,7 @@
 <body>
 <div id="stage">
 	<img src="i/rocket2.png">
-	<canvas width="600" height="600"></canvas>
+	<canvas width="600" height="300"></canvas>
 </div>
 <div>
 	<button id="circle">Circle</button>
@@ -37,13 +37,20 @@
 </div>
 
 <!-- JavaScript -->
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.js"></script>
+<!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script> -->
+<script>window.jQuery || document.write("<script src='js/jquery-1.5.1.min.js'>\x3C/script>")</script>
 <script src="js/jquery.easing-1.3.min.js"></script>
 <script src="js/jquery.transform-0.9.3.min.js"></script>
 <script src="../src/jquery.curve.js"></script>
 <script src="../src/jquery.tween.js"></script>
 <script>
 (function() {
+	/**
+	 * Converting a radian to a degree
+	 * @const
+	 */
+	var RAD_DEG = 180/Math.PI;
+	
 	var $canvas = $('canvas:first'),
 		canvas = $canvas[0],
 		ctx = canvas.getContext('2d');
@@ -75,8 +82,8 @@
 		// pull out the options to reuse them
 		var opts = {
 			x: 300,
-			y: 300,
-			radius: 150
+			y: 150,
+			radius: 75
 		};
 		
 		// Animate to the curve
@@ -90,11 +97,12 @@
 		
 		var opts = {
 			x: 300,
-			y: 300,
-			major: 300,
-			minor: 150
+			y: 150,
+			major: 150,
+			minor: 75,
+			angle: 30
 		};
-		
+				
 		// Animate to the curve
 		animate($.curve.ellipse, opts);
 	}
@@ -106,9 +114,11 @@
 		
 		var opts = {
 			x: 0,
-			y: 300,
+			y: 150,
 			amp: 150,
-			period: 2
+			arc: 360,
+			frequency: 2,
+			period: 1
 		};
 		
 		// Animate to the curve
@@ -122,11 +132,12 @@
 		
 		var opts = {
 			points: [
-				[0, 300],
-				[rand(0, 400), rand(0, 600)],
-				[rand(200, 600), rand(0, 600)],
-				[600, 300]
-			]
+				[0, 150],
+				[rand(0, 150), rand(0, 300)],
+				[rand(200, 300), rand(0, 300)],
+				[600, 150]
+			],
+			invert: false
 		}
 		
 		// Animate to the curve
@@ -149,9 +160,9 @@
 			
 			var opts = {
 				x: 300,
-				y: 300,
+				y: 150,
 				major: 300*(1-t),
-				minor: 300*t,
+				minor: 150*t,
 				arc: 360*5*t,
 				angle: 360*t
 			};
@@ -174,7 +185,7 @@
 			ctx.lineTo(p[0], p[1]);
 			ctx.stroke();
 		}, {
-			duration: 15000
+			duration: 1500
 		});
 	}
 	
@@ -183,7 +194,6 @@
 	}
 	
 	function animate(fn, opts) {
-		//ctx.beginPath();		
 		// Tween!
 		$elem.tween(function(now, fx) {
 			var $elem = $(this);
@@ -192,16 +202,17 @@
 			var p = fn(t, opts);
 			var x = opts.x,
 				y = opts.y,
-				Px = p[0],
-				Py = p[1],
-				angle = rad2deg($.curve.slope(fn, t, opts));
+				angle = rad2deg(p[2]);
+			
+			console.log(p);
+			// change the ship's position	
 			$elem.css({
 				left: (p[0] - w/2) + 'px',
 				top: (p[1] - h/2) + 'px',
 				rotate: parseFloat(angle.toFixed(8)) + 'deg'
 			});
 			
-			
+			// draw a line on the canvas
 			if (t == 0) {
 				ctx.moveTo(p[0], p[1]);
 			}

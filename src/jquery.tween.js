@@ -47,7 +47,5 @@
 	/**
 	 * Override the default step when tweening
 	 */
-	$.fx.step._tween = function() {
-		// do nothing
-	};
+	$.fx.step._tween = $.noop;
 })(jQuery);
