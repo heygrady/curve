@@ -17,7 +17,7 @@
 </head>
 
 <body>
-<canvas width="604" height="604"></canvas>
+<canvas width="602" height="602"></canvas>
 <div>
 	<button id="line">Linear</button>
 	<button id="quad">Quadratic</button>
@@ -61,6 +61,7 @@
 			[rand(200, 600), rand(0, 600)],
 			[600, 300]
 		];
+		ctx.strokeStyle = "rgb(0,0,255)";
 		bezier(points);
 	}
 	
@@ -72,6 +73,7 @@
 			[rand(200, 600), rand(0, 600)],
 			[600, 300]
 		];
+		ctx.strokeStyle = "rgb(0,0,255)";
 		bezier(points);
 	}
 	
@@ -84,6 +86,7 @@
 			[rand(300, 600), rand(0, 600)],
 			[600, 300]
 		];
+		ctx.strokeStyle = "rgb(0,0,255)";
 		bezier(points);
 	}
 	
@@ -97,6 +100,7 @@
 			[rand(300, 600), rand(0, 600)],
 			[600, 300]
 		];
+		ctx.strokeStyle = "rgb(0,0,255)";
 		bezier(points);
 	}
 	
@@ -109,7 +113,7 @@
 			ctx.fillRect(this[0], 600 - this[1], 4, 4);
 		});
 		
-		var steps = 8;
+		var steps = 4;
 		for (var i = 0; i <= steps; i++) {
 			var t = i/steps;
 			var p = $.curve.bezier(t, {
@@ -117,7 +121,7 @@
 				y: 600,
 				points: points
 			});
-			console.log(p);
+			console.log(p[2]);
 			if (i == 0) {
 				ctx.moveTo(p[0], p[1]);
 			}

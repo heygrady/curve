@@ -136,7 +136,8 @@
 				[rand(0, 150), rand(0, 300)],
 				[rand(200, 300), rand(0, 300)],
 				[600, 150]
-			]
+			],
+			invert: false
 		}
 		
 		// Animate to the curve
@@ -203,6 +204,7 @@
 				y = opts.y,
 				angle = rad2deg(p[2]);
 			
+			console.log(p);
 			// change the ship's position	
 			$elem.css({
 				left: (p[0] - w/2) + 'px',
@@ -217,7 +219,7 @@
 			ctx.lineTo(p[0], p[1]);
 			ctx.stroke();
 		}, {
-			duration: 15000
+			duration: 1500
 		});
 	}
 })();

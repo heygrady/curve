@@ -92,7 +92,7 @@
 				r = opts.radius || 0,
 				angle = opts.angle || 0,
 				arc = opts.arc || 360,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true;
 			
 			// convert time
 			t = time(t, opts);
@@ -107,7 +107,7 @@
 				y = cosalpha * r;
 			
 			// calculate the tangent angle
-			var theta = Math.atan(-1 * (x - a)/(y - b));
+			var theta = Math.atan(x/y);
 				
 			// rotate the circle
 			if (angle !== 0 && angle !== 360) {
@@ -145,7 +145,7 @@
 				minor = opts.minor || 0,
 				angle = opts.angle || 0,
 				arc = opts.arc || 360,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true;
 			
 			// convert time
 			t = time(t, opts);
@@ -161,8 +161,8 @@
 			
 			// calculate the foci
 			var f = Math.sqrt(Math.abs(major*major - minor*minor)),
-				f1 = major > minor ? [a + f, b]: [a, b + f],
-				f2 = major > minor ? [a - f, b]: [a, b - f];
+				f1 = major > minor ? [f, 0]: [0, f],
+				f2 = major > minor ? [-f, 0]: [0, -f];
 			
 			// calculate the inner angle
 			var theta1 = innerAngle([x, y], f1, f2);
@@ -176,7 +176,7 @@
 				var coord = rotate([x, y], angle);
 				x = coord[0];
 				y = coord[1];
-				theta += angle * DEG_RAD;
+				theta -= angle * DEG_RAD;
 			}
 			
 			// return coords and tangent angle
@@ -212,7 +212,7 @@
 				angle = opts.angle || 0,
 				arc = (opts.arc || 360) * DEG_RAD,
 				w = opts.wavelength || A * 2,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true;
 			
 			// convert time
 			t = time(t, opts);
@@ -269,7 +269,8 @@
 				b = opts.y || 0,
 				p = opts.points || [],
 				angle = opts.angle || 0,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true,
+				tangent = opts.tangent === false ? false : true;
 
 			// convert time
 			t = time(t, opts);
@@ -279,7 +280,7 @@
 				y = (1 - t) * p[0][1] + t * p[1][1];
 			
 			// calculate the tangent angle
-			var theta = Math.atan((p[0][1] - p[1][1]) / (p[0][0] - p[1][0]));
+			var theta = tangent ? Math.atan((p[0][1] - p[1][1]) / (p[0][0] - p[1][0])) : 0;
 			
 			// rotate the wave
 			if (angle !== 0 && angle !== 360) {
@@ -302,7 +303,8 @@
 				b = opts.y || 0,
 				p = opts.points || [],
 				angle = opts.angle || 0,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true,
+				tangent = opts.tangent === false ? false : true;
 				
 			// convert time
 			t = time(t, opts);
@@ -318,7 +320,7 @@
 				y = f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1];
 			
 			// calculate the tangent angle
-			var theta = 0;
+			var theta = tangent ? bezierTangent(t, p) : 0;
 			
 			// rotate the wave
 			if (angle !== 0 && angle !== 360) {
@@ -341,7 +343,8 @@
 				b = opts.y || 0,
 				p = opts.points || [],
 				angle = opts.angle || 0,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true,
+				tangent = opts.tangent === false ? false : true;
 
 			// convert time
 			t = time(t, opts);
@@ -358,7 +361,7 @@
 				y = f[0] * p[0][1] + f[1] * p[1][1] + f[2] * p[2][1] + f[3] * p[3][1];
 			
 			// calculate the tangent angle
-			var theta = 0;
+			var theta = tangent ? bezierTangent(t, p) : 0;
 			
 			// rotate the wave
 			if (angle !== 0 && angle !== 360) {
@@ -368,10 +371,11 @@
 				theta += angle * DEG_RAD;
 			}
 			
+			console.log(y);
 			// return coords and tangent angle
 			return [
 				a + x,
-				b + y * (invert ? -1 : 1),
+				b + y * (invert === true ? -1 : 1),
 				theta
 			];
 		},
@@ -381,7 +385,8 @@
 				b = opts.y || 0,
 				p = opts.points || [],
 				angle = opts.angle || 0,
-				invert = opts.invert || true;
+				invert = opts.invert === false ? false : true,
+				tangent = opts.tangent === false ? false : true;
 
 			// convert time
 			t = time(t, opts);
@@ -404,7 +409,7 @@
 			}
 			
 			// calculate the tangent angle
-			var theta = 0;
+			var theta = tangent ? bezierTangent(t, p) : 0;
 			
 			// rotate the wave
 			if (angle !== 0 && angle !== 360) {
@@ -422,6 +427,22 @@
 			];
 		}
 	});
+	
+	function bezierTangent(t, p) {
+		var points = [];
+		for (var i = 0, len = p.length - 1; i < len; i++) {
+			points.push([
+				p[i][0] - p[i+1][0],
+				p[i][1] - p[i+1][1]
+			]);
+		}
+		var point = $.curve.bezier(t, {
+			points: points,
+			tangent: false
+		});
+		
+		return Math.atan(-1 * (point[1]/point[0]));
+	}
 	
 	/**
 	 * @param Array p1 the fulcrum
