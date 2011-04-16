@@ -137,7 +137,7 @@
 	
 	$.extend($.curve, {
 		/**
-		 * Find the slope of a curve at a given time
+		 * Find the tangent of a curve at a given time
 		 * Uses a secant line to approximate
 		 * @param Function fn a curve function
 		 * @param Number t time as a percentage of the duration
@@ -145,14 +145,11 @@
 		 * 
 		 * @return Number angle in radians
 		 */
-		slope: function(fn, t, opts) {
-			var h = 1/1000,
+		secant: function(fn, t, opts) {
+			var h = 1/10000,
 				p1 = fn(t+h, opts),
 				p2 = fn(t-h, opts);
 			var rad = Math.atan((p1[1]-p2[1])/(p1[0]-p2[0]));
-			if (p1[0] < p2[0]) {
-				rad += Math.PI;
-			}
 			return rad;
 		},
 		
@@ -220,7 +217,6 @@
 			
 			// calculate the tangent angle
 			var theta = tangent ? Math.atan(x/y) + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0) : 0;
-				
 			// rotate the circle
 			if (angle !== 0 && angle !== 360) {
 				var coord = rotate([x, y], angle);
@@ -315,7 +311,7 @@
 		 *      amp - peak deviation from center in pixels
 		 *      period - number of complete waves to draw
 		 *      frequency - number of peaks in a single period
-		 *      wavelength - width in pixels of a single period
+		 *      //wavelength - width in pixels of a single period
 		 *      angle - direction of wave in degrees
 		 *      arc - portion of the wave to draw in degrees
 		 *      invert - flips the y-axis
@@ -325,12 +321,12 @@
 			var a = opts.x || 0,
 				b = opts.y || 0,
 				A = opts.amp || 0,
-				p = opts.period || 1,
+				p = 1, //opts.period || 
 				phase = opts.phase || 0,
 				f = opts.frequency || 1,
 				angle = opts.angle || 0,
 				arc = (opts.arc || 360) * DEG_RAD,
-				w = opts.wavelength || A * 2 * arc / Math.PI,
+				w = A * arc, //opts.wavelength || 
 				invert = opts.invert === false ? false : true,
 				tangent = opts.tangent === false ? false : true;
 			
@@ -338,22 +334,14 @@
 			t = time(t, opts);
 			
 			// calculate current angle
-			//var alpha = (t * f) * p * (arc * DEG_RAD);
 			var alpha = t * f * (arc * p) + phase;
 
 			// calculate coordinates
-			var x = t * w * p, // w = A * 2 * arc/PI * p = A * 4 * p for a proper sine wave
+			var x = t * w * p,
 				y = Math.sin(alpha) * A;
 
 			// calculate the tangent angle
-			// TODO: when w != A*4*p, calculate for an elliptical sine wave
-			var theta = tangent ? Math.cos(alpha) : 0;
-			//var theta = Math.atan(y / (a + Math.cos(alpha) * w / 2))
-			
-//			console.log(
-//				prec(theta * RAD_DEG, 2),
-//				prec(Math.atan(y / (a + Math.cos(alpha) * w / 2)) * RAD_DEG, 2)
-//			);
+			var theta = tangent ? Math.atan(f * Math.cos(alpha)) : 0;
 			
 			// rotate the sine wave
 			if (angle !== 0 && angle !== 360) {
@@ -367,7 +355,7 @@
 			return [
 				a + x,
 				b + y * (invert ? -1 : 1), // TODO: is precision needed?
-				theta
+				theta * (invert ? -1 : 1)
 			];
 		}
 	});
@@ -414,7 +402,7 @@
 			return [
 				a + x,
 				b + y * (invert ? -1 : 1),
-				theta
+				theta * (invert ? -1 : 1)
 			];
 		},
 		
@@ -454,7 +442,7 @@
 			return [
 				a + x,
 				b + y * (invert ? -1 : 1),
-				theta
+				theta * (invert ? -1 : 1)
 			];
 		},
 		
@@ -495,7 +483,7 @@
 			return [
 				a + x,
 				b + y * (invert === true ? -1 : 1),
-				theta
+				theta * (invert ? -1 : 1)
 			];
 		},
 		
@@ -542,7 +530,7 @@
 			return [
 				a + x,
 				b + y * (invert ? -1 : 1),
-				theta
+				theta * (invert ? -1 : 1)
 			];
 		}
 	});
