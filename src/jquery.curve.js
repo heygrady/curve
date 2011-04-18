@@ -189,6 +189,7 @@
 		 *      x - center in pixels
 		 *      y - center in pixels
 		 *      radius - length of the radius in pixels
+		 *      phase - shift the angle in degrees
 		 *      angle - rotation of the circle around the center in degrees
 		 *      arc - portion of the circle to draw in degrees
 		 *      invert - flips the y-axis
@@ -198,6 +199,7 @@
 			var a = opts.x || 0,
 				b = opts.y || 0,
 				r = opts.radius || 0,
+				phase = opts.phase || 0,
 				angle = opts.angle || 0,
 				arc = opts.arc || 360,
 				invert = opts.invert === false ? false : true,
@@ -207,7 +209,7 @@
 			t = time(t, opts);
 			
 			// calculate current angle
-			var alpha = t * arc * DEG_RAD,
+			var alpha = t * arc * DEG_RAD + phase * DEG_RAD,
 				sinalpha = Math.sin(alpha),
 				cosalpha = Math.cos(alpha);
 			
@@ -241,6 +243,7 @@
 		 *      y - center in pixels
 		 *      major - length of the major radius in pixels
 		 *      minor - length of the minor radius in pixels
+				phase -
 		 *      angle - rotation of the ellipse around the center in degrees
 		 *      arc - portion of the ellipse to draw in degrees
 		 *      invert - flips the y-axis
@@ -251,6 +254,7 @@
 				b = opts.y || 0,
 				major = opts.major || 0,
 				minor = opts.minor || 0,
+				phase = opts.phase || 0,
 				angle = opts.angle || 0,
 				arc = opts.arc || 360,
 				invert = opts.invert === false ? false : true,
@@ -258,9 +262,17 @@
 			
 			// convert time
 			t = time(t, opts);
-
+			
+			// correct for major and minor
+			if (major < minor) {
+				major = opts.minor;
+				minor = opts.major;
+				phase += 90;
+				angle += 90;
+			}
+			
 			// calculate current angle
-			var alpha = t * arc * DEG_RAD,
+			var alpha = t * arc * DEG_RAD + phase * DEG_RAD,
 				sinalpha = Math.sin(alpha),
 				cosalpha = Math.cos(alpha);
 
@@ -269,21 +281,21 @@
 				y = cosalpha * minor;
 			
 			// if tangent is requested
-			var theta;
-			if (tangent) {
+			var theta = 0,
+				f, f1, f2, theta1, theta2;
+				
+			if (tangent && major > minor) {
 				// calculate the foci
-				var f = Math.sqrt(Math.abs(major*major - minor*minor)),
-					f1 = major > minor ? [f, 0]: [0, f],
-					f2 = major > minor ? [-f, 0]: [0, -f];
+				f = Math.sqrt(major*major - minor*minor);
+				f1 = [f, 0];
+				f2 = [-f, 0];
 				
 				// calculate the inner angle
-				var theta1 = innerAngle([x, y], f1, f2);
-				var theta2 = alpha > QUAD_1 && alpha < QUAD_3 ? innerAngle(f1, f2, [x, y]) : innerAngle(f2, f1, [x, y]);
+				theta1 = innerAngle([x, y], f1, f2);
+				theta2 = alpha > QUAD_1 && alpha < QUAD_3 ? innerAngle(f1, f2, [x, y]) : innerAngle(f2, f1, [x, y]);
 				
 				// calculate the tangent angle
 				theta = ((Math.PI - theta1) / 2) - theta2 + (alpha > QUAD_1 && alpha < QUAD_3 ? Math.PI : 0);
-			} else {
-				theta = 0;
 			}
 			
 			// rotate the ellipse
@@ -326,9 +338,17 @@
 				f = opts.frequency || 1,
 				angle = opts.angle || 0,
 				arc = (opts.arc || 360) * DEG_RAD,
-				w = A * arc, //opts.wavelength || 
+				w = A * arc,
 				invert = opts.invert === false ? false : true,
 				tangent = opts.tangent === false ? false : true;
+			
+			if (opts.wavelength) {
+				var scale;
+				w = opts.wavelength;
+				scale = (A * 2 * Math.PI)/w;
+				f = scale * opts.frequency;
+				arc = arc/scale;
+			}
 			
 			// convert time
 			t = time(t, opts);
