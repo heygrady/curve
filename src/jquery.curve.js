@@ -345,9 +345,9 @@
 			if (opts.wavelength) {
 				var scale;
 				w = opts.wavelength;
-				scale = (A * 2 * Math.PI)/w;
-				f = scale * opts.frequency;
-				arc = arc/scale;
+				scale = (A * 2 * Math.PI) / w;
+				f = scale * f;
+				arc = arc / scale;
 			}
 			
 			// convert time
