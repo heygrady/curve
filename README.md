@@ -63,7 +63,7 @@ Curve defines functions for creating curves as a function of time
 **options** - A map of additional options to pass to the method. Supported keys:  
 *x:* A number, in pixels, the start point of the curve on the x-axis.  
 *y:* A number, in pixels, the start point of the curve on the y-axis.  
-*points:* An array of x and y coordinates for the bezier curve. Minimum 2 points required. 
+*points:* An array of x and y coordinates for the bezier curve. Minimum 2 points required.  
 *angle:* A number, in degrees, to rotate the curve around the start point.   
 *invert:* A boolean, flips the y-axis.  
 *tangent:* A boolean, include the tangent angle.  
