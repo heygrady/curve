@@ -55,7 +55,7 @@ Curve defines functions for creating curves as a function of time
 *frequency:* A number of peaks in one period of the wave.  
 *angle:* A number, in degrees, to rotate the wave around the start point.  
 *arc:* A number, in degrees, to determine portion of the wave to draw. Default: 360  
-*invert:* A boolean, flips the y-axis. 
+*invert:* A boolean, flips the y-axis.  
 *tangent:* A boolean, include the tangent angle.  
 
 ###$.curve.bezier(t, [options])
